@@ -1,0 +1,132 @@
+v1.1.0 Released 2005.05.01
+	- Fixed Bug: [ 1193091 ] URL Matching Bug with trailing chars
+	- Feature Request Completed: [ 1192636 ] (Optional) Large File Support 
+	    for Logs > 2GB
+	- fix for potential stale pid file bug
+	- code clean-up: unneeded debugging code removed
+v1.0.0 Released 2005.04.23
+	- gnutella port config option for UHC Support
+	- fix for a bug processing gnutella headers
+	- changed delay loops to be easier to interrupt
+	- Datastructure Re-org (context support)
+	- Nodes running on privileged ports are now rejected (<1024)
+	- Bug in duplicate ip rejection corrected
+	- Fix for crash bug when extracting by name from hosts linked list
+	- cpcd checks to see if it has root privileges and exits if it does
+	- safe cache file rewrites (tmp file rename)
+	- URLs are now rechecked if in bad URL file and over 1 week old
+	- lstat call search for config file added
+	- Improved/completed logging code
+	- autoconf checks for pthread library
+	- autoconf --prefix support and new autoconf options
+	- Code to support use of /var/run/cpcd/(pid) file
+	- Nonblocking connect code for host and url verification
+	- Servant Shutdown (503) message sent to tested servlets
+	- Bug fix in ultrapeer parsing
+	- Bug fix in stats, stats_html function interface change
+	- Changes to queue code to support multi-networks
+	- new max_bad_url config struct var
+	- bug fix in cpcd_html.c
+	- cpcd_config.c bug fixes (parser)
+	- url processing bug fix
+	- verbosity changes
+	- renamed docs/ to doc/
+	- Empty data file are now created if none exist
+	- init script bug fixes
+	- A 'cpcd' user is now created to run the cache
+	- rewrite of verify queue system
+	- case sensitivity on host name bug fix
+	- General Code Clean-Up
+v0.9.9 Released 2005.03.09
+	- NCSA Combined Format logging support (partial)
+	- Fix for race condition on very small socket reads
+	- Fix for segfault in CGI processing code
+	- Code to give 404 Not Found if virtual cgi name does not match 
+		(possible DoS via heavy loading)
+	- Major Fix and Clean up of Cache verification code
+	- Introduction of queueing system and thread pool for verifications
+	- Code clean-up & re-org (moved functions from cpcd.c to cpcd_util.c)
+	- Additional Checking in read_file & write_file (segfault fix)
+	- Removal of mutex around accept() call
+	- Functions outputting HTML moved to cpcd_html.{h,c}
+	- File writer thread which writes files every five minutes.
+	- config file options for numbers of threads, constant 
+		D_NUM_THREADS removed
+	- asp and php caches are now filtered (they are too unstable 
+		to propigate)
+	- port restriction config option to prevent cache abuse
+	- Queue depth check before queue add to prevent memory 
+		dos w/ tarpit possibly
+	- Check for gnutella connect rather than just socket connect
+	- MLDonkey temporarily banned.  They are pounding caches 
+		due to release of bad/untested code.
+	- X-Try-Ultrapeers: support (process_ultrapeers function added)
+	- Beginning of support for Gnutella UHC (Universal Host Cache) Protocol
+	- Project renamed to CryptNET Peer Cache Daemon (cpcd)
+v0.9.8 Released 2005.02.22
+	- Elimintion of malloc calls where safe to increase speed
+	- Reentrancy fixes
+	- Memory leak fixes
+	- Variable Scope fix for detached threads
+	- Fix for errant memset calls
+	- strncpy overlap fix
+	- Data Structure Changes
+	- Allowed clients & networks code fix
+	- Bug fix in readline function (race condition w/ poll)
+	- Clients added to default allow
+v0.9.7 Released 2005.02.18
+	- Fix for logic error in update code
+	- poll() time outs on read and write
+	- Additional socket error checking
+	- Stats page format change
+	- shutdown calls on sockets
+	- File descriptor leak fix
+	- Memory leak fixs
+v0.9.5 Released 2005.02.12
+	- Init script created for server
+	- Config File Support
+	- Proper Pinging of foreign caches for Gnutella & Gnutella2 net tests
+	- Fix for segfault in accept_connect
+	- Thread safe glib calls (even in prep for future)
+	- Basic Log File Support
+v0.9.0 Released 2005.02.11
+	- Conversion to thread pool server 
+	- Timeout for read_line function
+	- Detached thread for host verify
+v0.7.6 Released 2004.12.11
+	- Conversion to independent forking server
+	- gWebCache submissions verified with ping/pong test
+v0.7.5 Released 2004.01.05
+	- Node Verification
+v0.5.5 Released 2004.01.04
+	- Fix for segfault with improper queries
+	- Fix for incorrect isdigit call
+	- Fix for buffer preservation error
+	- Fix for NULL pointer comparison in HTTP Result Code
+v0.5.0 Released 2004.01.03
+	- Added Specfile for RPM Build
+	- Verification of submitted Cache URLs
+	- Added cpwc_util.c and cpwc_util.h
+	- Additional format checks on IP addresses
+v0.2.5 Released 2003.08.03
+	- Removed Obsolete Security Code
+	- Removed Obsolete Logging Code
+	- Additional Work code to support additional networks
+	- Private IP filtering for gnutella hosts
+	- Limited URL verification
+	- Added bootstrap datafiles in data/ directory in dist archive
+	- Cleaned up html_page output.
+v0.0.4 Released 2003.07.29
+	- Renamed project to CryptNET Peer Web Cache
+v0.0.3 Released 2003.07.20
+	- Removal of Stats Support
+	- Data Dump Support
+	- Copywright Information Added
+	- Started code re-org to eventually support running in
+		stand alone daemon format
+	- Config datastruct added
+	- process_update now will not delete if max vals not reached
+v0.0.2 Released 2003.07.11
+	- Bug fix for dup'd URLs.
+	- Code Clean Up
+v0.0.1 Released 2003.07.04

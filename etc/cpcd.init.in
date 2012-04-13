@@ -1,0 +1,128 @@
+#!/bin/bash
+#
+# Init Script for CryptNET Peer Cache daemon
+# Author:    V. Alex Brennen (codepoet@dublin.ie)
+#            [ http://cryptnet.net/people/vab/ ]
+# Created:   2005.03.11
+# Modified:  2005.03.31
+# Version:   1.0.0
+#
+# This file is part of the CryptNET Peer Cache Daemon.
+# Full sourcecode and documentation is available from
+# the project's web page: http://cryptnet.net/fsp/cpcd/
+#
+# cpcd is free software; it has been placed in the public
+# domain.  If you wish to retain the copyright to your
+# patch, do not submit it to CryptNET.
+#
+# chkconfig:
+# description: CryptNET Peer Cache daemon
+#
+# processname: cpcd
+# config: @CONFDIR@/cpcd.conf
+
+# Some macros to improve readability
+prog="cpcd"
+
+CPCD="/usr/local/bin/cpcd"
+
+start()
+{
+	if [ -e @PIDDIR@/cpcd.pid ]; then
+		echo "cpcd seems to be already running: @PIDDIR@/cpcd.pid exists."
+		echo "Please delete cpcd.pid if the server is not running."
+		exit 1
+	fi
+	echo -n $"Starting $prog:"
+	if [ -e $CPCD ]; then
+		su - cpcd -c "nohup nice -4 $CPCD 2>&1 >> /dev/null &"
+		if [ "$?" = "0" ]; then
+			echo "             [OK]"
+		else
+			echo "             [Failure]"
+		fi
+	fi
+}
+
+stop()
+{
+	echo -n $"Stopping $prog:"
+
+	if [ -e @PIDDIR@/cpcd.pid ]; then
+		kill -TERM `cat @PIDDIR@/cpcd.pid`
+		for c in $(seq 1 60); do
+		if [ -e @PIDDIR@/cpcd.pid ]; then
+			echo -n "."
+			sleep 1
+		fi
+		done
+		if [ -e @PIDDIR@/cpcd.pid ]; then
+			echo "              [Failure]"
+			echo "cpcd did not shutdown cleanly - killing"
+			kill -KILL `cat @PIDDIR@/cpcd.pid`
+				rm @PIDDIR@/cpcd.pid
+				sleep 5
+		fi
+		echo "               [Done]"
+	else
+		echo "@PIDDIR@/cpcd.pid is missing. Server stopped already?"
+		echo "Trying pkill (if installed):"
+		pkill -TERM $CPCD
+		if [ "$?" = "0" ]; then
+			echo "             [Yes]"
+		else
+			echo "             [No]"
+		fi
+        fi
+}
+
+reload()
+{
+	echo -n $"Reloading $prog:"
+	
+#	pkill -HUP $CPCD
+#	echo
+	
+#	if [ -e @PIDDIR@/cpcd.pid ]; then
+		echo "Reloading the CryptNET Peer Cache Daemon..."
+#		if ( kill -HUP `cat @PIDDIR@/cpcd.pid` ); then
+#	else
+#		echo "@PIDDIR@/cpcd.pid is missing. Server not running?"
+#		start
+#	fi
+	stop
+	start
+}
+
+status()
+{
+	if [ -e @PIDDIR@/cpcd.pid ]; then
+		echo "The CryptNET Peer Cache is running."
+		exit 0
+	else
+		echo "The CryptNET Peer Cache is stopped."
+		exit 0
+	fi
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop;
+		start;
+		;;
+	reload)
+		reload
+		;;
+	status)
+		status
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|status}"
+esac
+exit 0

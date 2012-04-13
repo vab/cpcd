@@ -1,0 +1,15 @@
+v1.2.0
+	Reorganization of socket/logging code
+	Better Organization of Data Files
+		- Bad caches stored per network rather than system wide
+		- seperate no dns entry bad hosts cache
+	Consider randomized circular lists
+	uhc support
+	"cluster" support
+v2.0.0
+	IP v6 Support
+	Compression
+v3.0.0
+	UltraPeer Connection Brokering
+	Cache Tracking
+		Sort by Strength

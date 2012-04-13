@@ -1,0 +1,86 @@
+# CryptNET Peer Cache Configuration File
+#
+# This files contains all of the options in the
+# cpcd_config struct in the datastructures.h
+# header file.
+#
+# If the first character of a line is '#', the
+# line is ignored. Also, all blank lines are
+# ignored.
+#
+# For more information about the options available,
+# please see the doc directory in the source code
+# distribution archive.
+
+# Options
+
+# IP number for cpcd to bind to
+# MAXLEN [16]
+bind_ip 127.0.0.1
+
+# Port for cpcd to bind to or html gwebcache support
+# MAXLEN [10]
+web_bind_port 8080
+
+# Port for cpcd to bind to or html uhc support
+# MAXLEN [10]
+gnutella_bind_port 6346
+
+# The URL of the server
+# MAXLEN [255]
+server_url http://localhost:8080/pwc.cgi
+
+# Should The Server Keep A Web Server Log File (This file may grow large)
+# (Not Yet Implemented)
+# MAXLEN (integer)
+cpcd_keep_log 0
+
+# Location Where The Cache Data Files Are Kept
+# MAXLEN [255]
+data_dir @DATADIR@
+
+# Log File Directory
+# MAXLEN [255]
+log_dir @LOGDIR@
+
+# PID File Directory
+# MAXLEN [255]
+pid_dir @PIDDIR@
+
+# Enable Bandwidth Throttling (Not Yet Supported)
+# MAXLEN (integer)
+cpcd_throttle_support 0
+
+# Peer to Peer Networks for which the Cache can be used.  
+# Default:  All networks the Cache is capable of supporting
+# MAXLEN [255]
+allowed_networks gnutella gnutella2 MetaNET
+
+# The network we assume a client wants to get on if they don't specify one
+# MAXLEN [255]
+default_network gnutella
+
+# Peer to Peer programs which are allowed to use the Cache
+# Default:  All Clients capable of using the Cache
+# MAXLEN [255]
+allow_servlets LIME GTKG GNUC BEAR MRPH MESH RAZA ACQX MNAP SWAP MUTE TEST META XOLO QTLA PHEX KIWI TFLS GALA ACQL GNZL GDNA GIFT
+
+# Number of hosts to cache and deliver to queries
+# MAXLEN (integer)
+max_hosts 50
+
+# Number of URLs for other caches to cache and deliver to queries
+# MAXLEN (integer)
+max_urls 20
+
+# Number of threads in thread pool to handle connections
+# MAXLEN (integer)
+listen_threads 100
+
+# Number of Threads in thread pool to verify submitted hosts
+# MAXLEN (integer)
+host_threads 20
+
+# Restrict entries to standard guntella port
+# MAXLEN (integer)
+port_restriction 0

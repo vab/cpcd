@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC '-//OASIS//DTD DocBook XML V4.4//EN' "http://oasis-open.org/docbook/xml/4.4/docbookx.dtd" []>
+
+<book lang="en">
+<title>CryptNET Peer Cache Daemon (cpcd) Administrator Manual</title>
+<bookinfo>
+<author>
+<firstname>V. Alex</firstname>
+<surname>Brennen</surname>
+<affiliation>
+<address><email>codepoet@dublin.ie</email></address>
+</affiliation>
+</author>
+<pubdate>2005-04-23</pubdate>
+<revhistory>
+	<revision>
+		<revnumber>1.1.0</revnumber>
+		<date>2005-05-01</date>
+		<authorinitials>VAB</authorinitials>
+		<revremark>Initial Release.</revremark>
+	</revision>
+	<revision>
+		<revnumber>1.0.0</revnumber>
+		<date>2005-04-23</date>
+		<authorinitials>VAB</authorinitials>
+		<revremark>Initial Release.</revremark>
+	</revision>
+</revhistory>
+</bookinfo>
+<chapter id="intro">
+<title>Introduction to cpcd</title>
+<section>
+<title>Introduction to cpcd</title>
+<para>The CryptNET Peer Cache Daemon (cpcd) is a light weight multithreaded program that serves as a bootstrapping system for peer to peer networks.  Currently, it is specifically targeted at the Gnutella Network.  It implements the gWebCache protocol, version 1 and 2 with the acception of "node clusters".  Node  clusters where not implemented in the original reference implementations of gWebCache and are not implemented in any know p2p programs.</para>
+<para>cpcd was designed to allow peer to peer servlets to quickly gain access to other peers, and their resources, while consuming minimal resources on the server that the cache is running on.  Due to its multithreaded design and source code written in the C programming language, a single copy of cpcd can serve many millions of requests per day while consuming only very small amounts of memory and cpu time.</para>
+<para>In order to run cpcd, you should have atleast a Pentium II 266mhz, and 256MB of RAM. The amount of RAM that cpcd needs to run can be reduced by reducing the number of threads the program keeps in it's thread pools.  More information about the sizing of thread pools can be found in the configuration chapter.</para>
+<warning>
+<para>
+It is very strongly recommended that you set up a specific DNS hostname for your cache. For example, if you're the owner of the domain example.ie and you're willing to run a copy of cpcd on the server that hosts the website for example.ie, you should create a DNS entry called something like cpcd.example.ie.  This is very important because some older poorly implemented clients and caches will not stop attempting to access a cache even if it no longer exists.  So example.ie could get many hundreds of thosands of connection attempts per day even years after you decided that you no longer wanted to run a copy of cpcd.  This could result is significant bandwidth costs on a metered connection.  By using a separate DNS entry for the cache, you can prevent these poorly written programs from attempting to contact you by deleting the DNS entry.  If you have a dedicated cache DNS entry, shutting down your cache in this way won't disrupt your web site or e-mail.
+</para>
+</warning>
+</section>
+<section>
+<title>How p2p Systems Bootstrap</title>
+<para>Gnutella systems should currently bootstrap themselves by loading first cache data off of the local disk.  If they are unable to connect to the network in a reasonable amount of time using that approach they then attempt to use an internet bootstrapping solution. The two most commonly used bootstrapping solutions are Universal Host Caches (UHC's) and gWebCaches.  Most peer to peer servlets will attempt to bootstrap from disk cached nodes for one to five minutes.  The cpcd program, as mentioned in the introduction, currently implements the gWebCache protocol.</para>
+<para>For a specific example of a p2p servlet, we can look to LimeWire.  LimeWire follows the following bootstrapping steps:</para>
+<screen>
+Local Disk Cache --> Dedicated UHC --> gWebCaches (including cpcd)
+</screen>
+<para>Once a Gnutella Servlet finds another active node, it relies on nodes found through special response headers, by analysing search packets, and through pings and pongs.</para>
+</section>
+<section>
+<title>History of gWebCache</title>
+<para>gWebCache was one of the first solutions to the bootstrapping problem.  gWebCache was originally a CGI script written in php which was meant to help small numbers of people form very small local p2p clouds.  gWebCaches had the ability to maintain caches of active peers in a networks which where continually refreshed.  It also was capable of caching the URL addresses of other gWebCache scripts, allowing the gWebCaches to form a network of themselves to distribute load as their popularity grew.</para>
+<para>Before gWebCache was written, people often relied on asking for the address of active node in IRC channels or by viewing static web pages and entering them into their servlets by hand. After its introduction, people could rely on the automated mechanism that it provided.</para>
+<para>The protocol used to interact with the caches was a simple set of CGI queries and pipe delimited response data.  This was both good and bad because while it meant that it was easy for developers to start using the network, it was also easy for sub-par programmers to write implementations.</para>
+<para>Poor implementations of the protocol on both the client and server side as well as rapidly growing popularity eventually made it impossible to continue to run the first generation of the small scripts.  None of them verified that ip addresses submitted to them where valid non-busy nodes, and none of them verified that cache URL addresses submitted to them where actually caches.  These oversights lead to all kinds of abuses and denial of services attacks against both the caches network and unrelated websites.  These problems have been corrected in cpcd.</para>
+</section>
+<section>
+<title>Ultra Hosts Caches</title>
+<para>Ultra Host Caches (UHC) are a relatively new component of the Gnutella protocol.  Hooks for UHC support have been placed in cpcd.  However, cpcd will not support the UHC protocol until a future release.</para>
+</section>
+<section>
+<title>Why is it important to run it</title>
+<para>It is important to run as many Peer Caches as possible because this ensures the viability of peer to peer networks which use the caches over the long term.  In the case of very large networks such as gnutella, a large number of caches maximizes not only redundancy and availability, but also help reduce the load on individual caches as clients will naturally balance themselves across all avaliable caches.</para>
+<para>The gWebCache based caches are a final effort for all p2p clients on the Gnutella network, and many older clients still lack UHC support.  Therefor. even with the introduction of the UHC solution, if the cache network fails due to a lack of caches or overburdening of caches it will prevent many people form using the Gnutella p2p Network.</para>
+</section>
+</chapter>
+<chapter id="installation">
+<title>Installation of cpcd</title>
+<section>
+<title>Quick Start</title>
+<orderedlist>
+<listitem>
+<para>Run GNU/Linux</para>
+</listitem>
+<listitem>
+<para>./configure</para>
+</listitem>
+<listitem>
+<para>make</para>
+</listitem>
+<listitem>
+<para>make install</para>
+</listitem>
+<listitem>
+<para>Make a DNS Sub Domain for your cache</para>
+</listitem>
+<listitem>
+<para>vi /usr/local/etc/cpcd.conf</para>
+</listitem>
+<listitem>
+<para>/etc/init.d/cpcd start</para>
+</listitem>
+</orderedlist>
+</section>
+<section>
+<title>The GNU/Linux Operating System</title>
+<para>The CryptNET Peer Cache Daemon was written specifically for the GNU/Linux operating system.  It is not meant to be run on other operating systems such as FreeBSD, MacOS, or Windows.  It is expected that cpcd will most likely be run on a dedicated machine, there for flexibility in operating system choice was not viewed as being worth the effort.  The level of effort to support other operating systems is expected to be significant because of the design of cpcd is heavily integrated with the pthreads threading library.</para>
+</section>
+<section>
+<title>./configure Options</title>
+
+<segmentedlist><title>Compile, Build and Installion Options</title>
+<?dbhtml list-presentation="list"?>
+<segtitle>Option</segtitle>
+<segtitle>Description</segtitle>
+<seglistitem><seg>--prefix</seg><seg>Install prefix</seg></seglistitem>
+<seglistitem><seg>--logdir</seg><seg>Log Directory Location</seg></seglistitem>
+<seglistitem><seg>--datadir</seg><seg>Data Directory Location</seg></seglistitem>
+<seglistitem><seg>--withconfig</seg><seg>Config File Location</seg></seglistitem>
+<seglistitem><seg>--enable-lfs</seg><seg>Enable Large File Support (--enable-lfs=yes)</seg></seglistitem>
+</segmentedlist>
+<tip>
+<para>Options specified at compile time with configure can be over ridden by placing new values in the <filename>cpcd.conf</filename> configuration file. The values specified with configure script options are placed in your <filename>cpcd.conf</filename> file automatically.</para>
+</tip>
+</section>
+</chapter>
+<chapter id="configuration">
+<title>Configuration and Running of cpcd</title>
+<section>
+<title>The Configuration Sub System</title>
+<para>The configuration of the cpcd software is performed by editing the file cpcd.conf.  This is a standard space delimited Linux configuration file.  Blank lines are ignored, lines starting with the '#' character are comments,and name value pairs are separated by a space. By default, the <filename>cpcd.conf</filename> file is stored in <filename class="directory">/usr/local/etc</filename>
+.</para>
+</section>
+<section>
+<title>Item by Item Options</title>
+<para>The following configuration options are available to you:</para>
+
+<section>
+<title>General Configuration Options</title>
+<segmentedlist><title>Configuration Options</title>
+<?dbhtml list-presentation="list"?>
+<segtitle>Option</segtitle>
+<segtitle>Default</segtitle>
+<segtitle>Description</segtitle>
+<seglistitem><seg>bind_ip</seg><seg>127.0.0.1</seg><seg>This is the ip number which cpcd will bind to. At this time only ipv4 addresses are supported. cpcd does not bind to all ips on a host because I expect some people may wish to run it in a virtual server environment.</seg></seglistitem>
+<seglistitem><seg>web_bind_port</seg><seg>8080</seg><seg>The port for your cache to listen for HTTP CGI requests on.  Port 8080 was chosen as the default because it is the official non privlidged port for web traffic.  It is unlikely to be firewalled by network administrators.</seg></seglistitem>
+<seglistitem><seg>gnutella_bind_port</seg><seg>6346</seg><seg>The port on which cpcd should listen for UHC traffic once UHC is fully implemented. Port 6346 was chosen because it is the default Gnutella port for most Gnutella servlets.</seg></seglistitem>
+<seglistitem><seg>server_url</seg><seg>http://localhost:8080/pwc.cgi</seg><seg>The full URL to your cache. This is used to keep your cache from providing it's own URL to clients who obviously already know its URL. It is also displayed on the default human readable HTML page.</seg></seglistitem>
+<seglistitem><seg>cpcd_keep_log</seg><seg>Off</seg><seg>A flag to activate or deactivate logging. If it is set, cpcd will log requests.  By default, it is turned off and cpcd does not log any information.</seg></seglistitem>
+<seglistitem><seg>data_dir</seg><seg>/var/tmp/cpcd</seg><seg>This is the directory where cpcd will store its data files. Each network specified in the allowed_networks configuration option will have a file here named network_name.dat.  There will also be a file called <filename>bad_caches.dat</filename> for URL submitted by clients which could not be validated.</seg></seglistitem>
+<seglistitem><seg>log_dir</seg><seg>/var/log/cpcd</seg><seg>This is the directory where the access log for your cache will be stored.  Note that logging is disabled by default due to the large numbers of hits most caches get.</seg></seglistitem>
+<seglistitem><seg>pid_dir</seg><seg>/var/run/cpcd</seg><seg>The directory where the current process id for the cache is stored.  It will be stored in a file called <filename>cpcd.pid</filename>.  The process id file is used to allow the init script to easily interact with the running instance of the cache.</seg></seglistitem>
+</segmentedlist>
+<tip>
+<para>
+The default ip address that cpcd binds to is the loopback. This is useful for testing before deploying your cache, but you'll need to change it to your public address before your cache will be able to participate in the cache network. When you change bind_ip, you'll also want to change the value for server_url to avoid caching your own url.
+</para>
+</tip>
+</section>
+<section>
+<title>Performance Related Options</title>
+<segmentedlist><title>Configuration Options</title>
+<?dbhtml list-presentation="list"?>
+<segtitle>Option</segtitle>
+<segtitle>Default</segtitle>
+<segtitle>Description</segtitle>
+<seglistitem><seg>listen_threads</seg><seg>100</seg><seg>The number of threads in the thread pool that accepts incoming connections from peers. All of these threads have a <function>main()</function> routine which repeatidly calls <function>accept()</function>. If <function>accept()</function> returns a valid connection, the thread goes on to handle the request. The default number of threads is sufficient to handle many millions of connections a day.  You may wish to reduce it to reduce the amount of memory cpcd uses. Signs that it would need to be increased would be slow responses from the daemon or a significant backlog of connections waiting to be accepted.</seg></seglistitem>
+<seglistitem><seg>host_threads</seg><seg>20</seg><seg>The number of threads in the verify pool. When a valid peer servlet host address is submitted to cpcd, it is placed in a processing queue. The threads in the host_thread pool then make mutex protected <function>pop()</function> calls against that queue. The thread upon poping an address, attempts to make a valid Gnutella connection to it. The 5:1 ratio with the listen_thread pool seems to work well. Such a large number of threads are needed, not because the work is intense, but because the network communication and connection establishment can take some time.  An upper limit has been defined in the source code for the size of the queue. If the upper limit is reached, the oldest pending item is removed while additional items are added to prevent a memory mound DoS attack.</seg></seglistitem>
+<seglistitem><seg>cpcd_throttle_support</seg><seg>0</seg><seg>[Not Yet Supported]</seg></seglistitem>
+</segmentedlist>
+</section>
+<section>
+<title>Security Related Options</title>
+<segmentedlist><title>Configuration Options</title>
+<?dbhtml list-presentation="list"?>
+<segtitle>Option</segtitle>
+<segtitle>Default</segtitle>
+<segtitle>Description</segtitle>
+<seglistitem><seg>allowed_networks</seg><seg>gnutella gnutella2 MetaNET</seg><seg>A list of networks that you will allow your network to accept queries and updates for.  Each network will have its own datastructure for hosts and alternative caches and its own .dat file.</seg></seglistitem>
+<seglistitem><seg>default_network</seg><seg>gnutella</seg><seg>This is the network for which hosts and URLs are returned in response to queries which do not specify a specific network.</seg></seglistitem>
+<seglistitem><seg>allow_servlets</seg><seg>LIME GTKG GNUC BEAR MRPH MESH RAZA ACQX MNAP SWAP MUTE TEST META XOLO QTLA PHEX KIWI TFLS GALA ACQL GNZL GDNA GIFT</seg><seg>This is the list of servlets which are allowed to access your cache.  You may wish to remove some of these servlets if they produce too high of a load on your cache.  You can also add new programs as they come into use with out updating your cache source code.</seg></seglistitem>
+<seglistitem><seg>max_hosts</seg><seg>50</seg><seg>The maximum number of servlets that cpcd will store on a per network basis. You can reduce this number to dramatically reduce the amount of bandwidth that your cache uses. You can also increase it to increase the likleyhood that a servlet using your cache data to attempt to find a peer to connect to will be to find a non-busy peer and establish a connection no their peer to peer network.</seg></seglistitem>
+<seglistitem><seg>max_urls</seg><seg>20</seg><seg>The maximum number of URLs for other caches that cpcd will store on a per network basis.  You can reduce this number to reduce the bandwidth usage of your cache.</seg></seglistitem>
+<seglistitem><seg>port_restriction</seg><seg>Off</seg><seg>Force cpcd to only accept hosts of the standart Gnutella port. The gWebCache network was once abused by a MicroSoft windows Virus writer as a mechanism to help machines he had compromised link together in a botnet. It was possible to identify the compromised machines because they when operating an a specific non-standard port. This type of misuse is  unlikely to happen with cpcd because full Gnutella handshaking is done with every listed node.  However, it is still possible.  So, you may want to turn this on.  Please note that many legitimate Gnutella users will use non-standard ports to get around traffic shaping or firewall rules of their local network.</seg></seglistitem>
+</segmentedlist>
+</section>
+</section>
+<section>
+<title>Starting cpcd</title>
+<para>cpcd is started using the init script system.  To start cpcd, you simply execute its init script as root.  Such exsection may look as follows:</para>
+<screen>
+bash# /etc/init.d/cpcd start
+</screen>
+<para>Since cpcd uses the init system, you can configure it to start automatically at boot time. This will allow you to make sure that cpcd is running after a reboot caused by a power outage, or system crash.  The command to schedule the start of a daemon at run time differs across linux distributions.
+As an example, that command on Gentoo Linux, would be:</para>
+<screen>
+bash# rc-update add cpcd default
+</screen>
+</section>
+<section>
+<title>Stopping cpcd</title>
+<para>The init system is also stopped using the init system. This is done with the following cammand:</para>
+<screen>
+bash# /etc/init.d/cpcd stop
+</screen>
+<para>Since cpcd will most likely have many active connections, it may take a few moments for cpcd to fully shutdown. cpcd will attempt to give connections some time to complete handshakes and read calls a few seconds to time out.  While it is shutting down, cpcd will not be accepting any new connections.</para>
+<para>If it is an emergency, you can halt cpcd immediately by sending it a KILL signal.  To do this, get a list of all running cpcd processes, and then send the signal with the kill command.  This series of steps would look as follows:</para>
+<screen>
+bash# ps -ef | grep cpcd
+cpcd     11063 10414  0 Mar29 pts/28   00:00:00 su - cpcd -c cpcd -v
+cpcd     11064 11063  0 Mar29 pts/28   00:00:00 cpcd -v
+cpcd     11065 11064  0 Mar29 pts/28   00:00:01 cpcd -v
+cpcd     11066 11065  0 Mar29 pts/28   00:00:02 cpcd -v
+cpcd     11067 11065  0 Mar29 pts/28   00:00:02 cpcd -v
+bash# kill -9 11063
+</screen>
+</section>
+<section>
+<title>Restarting cpcd to Reload its Configuration and Data</title>
+<para>While many daemons will retart and reload their configurations when sent a HUP signal, this is not the case with cpcd.  This is because the multi threaded design of cpcd makes it very difficult to implement such a reload programatically.</para>
+<para>In order to get cpcd to reload either its configuration or its disk data cache, you must fully stop and then start the daemon.  The init script included in the distribution performs this two steps for you when issued a restart command. A restart command can be issued to the script as follows:</para>
+<screen>
+bash# /etc/init.d/cpcd restart
+</screen>
+</section>
+</chapter>
+<chapter id="monitoring">
+<title>Monitoring</title>
+<section><title>Overview of Monitoring</title>
+<para>Monitoring of the cpcd software can be done by turning on the logging feature and running analysis on the logs with a web statistics program such as analog. A realtime statistics and data display page is also provided. To access these pages, simply point your web browser at the port that cpcd is listening on.</para>
+</section>
+<section>
+<title>The Access Log</title>
+<para>By default the name of the log file is <filename>cpcd.log</filename> and it is stored in the directory <filename class="directory">/var/log/cpcd</filename>.</para> 
+<para>The log is in the NCSA Combined Format. This format includes information about the number of bytes transmitted, the request the client made, the client's ip address, software version, and ip address.</para>
+<para>All requests are logged to the <filename>cpcd.log</filename> file.  Unlike the Apache web server, there is not a separate log file for failed or invalid requests.  This is because having a single log should make trouble shooting and analsis easier. Since the cache operates with a well defined protocol, a client should not make an errant request unless it has an error in it's implementation or was given bad data by another cache.</para>
+<para>If you wish to produce stats for your cache from its access log with the Analog program, you can use the following LOGFORMAT definition:</para>
+<screen>
+LOGFORMAT (%S %j %j [%d/%M/%Y:%h:%n:%j] "%j%w%r%w%j" %b %c "%j" "%B" "%j")
+</screen>
+</section>
+</chapter>
+<chapter id="troubleshooting">
+<title>Trouble Shooting</title>
+<section>
+<title>Program Crashes</title>
+
+<para>In order for a bug to be fixed, it must first be found. If you experience a crash, the most helpful way to aid in the correction of the problem is to run cpcd with in the debugger.  It was most likely build with debugging symbols when you installed it.  If not, you can rebuild it from its source code with debugging symbols and simply run it with in gdb from the src directory in the distribution archive.</para>
+<para>The gdb Debugger has the ability to create a backtrace.  A backtrace is basically a list of all the programatic steps that led up to the crash. You can create a backtrace by running cpcd inside gdb, and issuing the command 'bt' after a crash.  This is the most useful data that is available when dealing with a program crash.</para>
+<para>If you can duplicate a program crash, but not when the progam is running in gdb, you can run the program under the strace program or under the valgrind program.  Both of those tools may give you an idea of what is going on.</para>
+<tip>
+<para>Some older versions of GDB and Valgrind cannot handle programs which have a large number of threads. Before attempting to use these programs, you should upgrade to the latest possible version. If you still encounter problems, you should reduce the number of threads cpcd is using in its thread pools significantly and try again.</para>
+</tip>
+</section>
+<section>
+<title>Aggressive memory consumption</title>
+<para>Diagnosing aggressive memory consumption can be very difficult since the program is multithreaded, has a continual execution flow, and was designed to cache and buffer as much data in memory as possible in order to run as fast as possible.</para>
+
+<para>Before attempting to diagnose a memory leak or memory bound denial of service attack, you should first determine an estimate of how much memory your specific configuration will use.  This can be done most easily by launching the program and checking its memory usage before advertising your cache.  The Linux kernel uses a Light Weight Process [LWP] threading model.  Therefor, each thread in the pool will use a not insignificant amount of addition memory.  Running with its default config, cpcd's memory usage tends to be about 2.5KB per thread and to total about 200MB.</para>
+
+<para>If your instance of cpcd is using significantly more memory than this, you should check that the size of the <filename>bad_caches.dat</filename> and the dat files for your supported networks are a sane size. Next, you should access your cache's web page to make sure it is returning a valid data set to you. You should also check the byte counts in the log file and watch your cache in 'top' to see if its memory usage is growing rapidly.</para>
+<tip>
+<para>You can sort the processes in top by memory usage by hitting uppercase-M while top is running.</para>
+</tip>
+
+<para>If you are reasonably sure that there is in fact a memory leak, you can run the program under valgrind to attempt to find and report it.  Please, see the tip in the previous section about using a recent version of valgrind.</para>
+<para>If you are unable to find a memory leak, but still believe that one may exist, it is still helpful to report it.  A cpcd developer can use more advanced memory allocation tracking tools than valgrind, such as the glibc mtrace system.</para>
+</section>
+<section>
+<title>Lost data, errant data</title>
+<para>If the problem is incorrect or errant data being delivered to clients, you will need to first determine if you are the target of a cache poisining attack.  A cache poisining attack occurs when a client accessing a cache purposefully submits bad data to the cache in the hope that the cache software will deliver that false data to other clients.  Determining if such at attack is taking place can be done by reviewing the access log, and by reviewing the trasmitted data of sessions by recording them with a program such as ethereal or tcpdump.</para>
+
+<para>An instance in which hostile data submission should be suspected would be when one or more entries in the cache are invalid.  If all entries are invalid or there are no entries the problem is more likely to be occuring at a progamatic or system level locally.  If data is lost or wholly incorrect, strace may be used to watch exactly what the program does during an update and query session.</para>
+
+<para>Due to the extensive verification that cpcd does, cache poising is highly unlikely. The most likely cause of the problem is memory curruption due to a program bug, or bad hardware. Completely corrupted data files should be submitted along with log excerpts to the developer for analysis to help determine if the cause is a bug.</para>
+
+<para>When attempting to identify and diagnose a problem suspected to be a program bug, configuration problem, or a system problem (such as a failed hard drive), it is useful to run an additional copy of cpcd on the loopback.  This will allow you to easy look at data with ethereal and avoid confusion caused by the actions of active clients.</para>
+
+</section>
+<section>
+<title>Hostile Hosts</title>
+<para>To deal with a hostile host, you should drop the route to the host or the host's network.  This will allow your cache to continue to run with only minimal disruption until the attack has ended.  Since many of the peer to peer clients used are free software, a user of a servlet may not realize that he is attacking you.  Some of the more inexperienced programmers have made programatic errors in their applications which result in behavior equivalent to a denial of service attack. The only solution to reduce cache load is to refuse the connections in the first place by dropping the connections.  The first step is to remove the software version from the allow_servlets option in the host configuration file, and then to drop the routes to any one who continues to abuse your cache with the errant software.</para>
+<para>When dealing with this type of problem, it may be helpful to determine how many open connections a specific host or network has to your cache at a given time.  You can do that with the following command:</para>
+<screen>
+bash# netstat -an | grep (cache port #)
+</screen>
+<para>While attacks are rare, they do happen. The ability to use the old gWebCaches in bot net viral MicroSoft networks has motivated fudeing hackers to attack caches, and record and media companies may also attempt to attack your cache. Again, the solution here is to drop routes.</para>
+<para>These are the commands to drop a route:</para>
+<screen>
+(Host)
+bash# route add -host 83.116.208.110 reject
+
+(Whole Network)
+bash# route add -net 24.0.154.0 netmask 255.255.255.0 reject
+</screen>
+</section>
+</chapter>
+<chapter id="bugreports">
+<title>Bug Reports, Feature Requests and Patches</title>
+<section>
+<title>Information to Include in a Bug Report</title>
+<para>If your bug report relates to a system crash, please attempt to create and submit a backtrace.</para>
+<para>Ideally, your bug report should include as much of this information as possible:</para>
+<orderedlist>
+<listitem>
+<para>Your contact information</para>
+</listitem>
+<listitem>
+<para>The version of cpcd your are running</para>
+</listitem>
+<listitem>
+<para>Your configuration file</para>
+</listitem>
+<listitem>
+<para>A Backtrace, if relevant</para>
+</listitem>
+<listitem>
+<para>Any relevant sample data</para>
+</listitem>
+<listitem>
+<para>Any relevant sample requests from the cpcd.log file</para>
+</listitem>
+</orderedlist>
+<para>Bug reports should be submitted to the SourceForge <ulink url="http://sourceforge.net/tracker/?atid=737575&amp;group_id=137061&amp;func=browse">cpcd Project Bug Tracking System</ulink>.</para>
+</section>
+<section>
+<title>Information to Include in a Feature Request</title>
+<para>Please include as complete description of the feature as possible and an explanation of why you feel the feature should be implemented. A fair warning, I'm a big believer in keeping program source code as simple as possible, using as little system resources as possible, and staying away from new unnecessary technologies. Therefor, you need to make a case for a clear benefit to end users if you want your request taken seriously. Submitting a patch is a good way to increase the likelyhood that your patch will be seriously considered.  Submitting a patch is covered in the next section.</para>
+<para>Feature Requests which include patches should be submitted as described in the Patch Submission Section. Feature Requests which do not include patches should be submitted to the SourceForge <ulink url="http://sourceforge.net/tracker/?atid=737578&amp;group_id=137061&amp;func=browse">cpcd Project Feature Request Tracking System</ulink>.</para>
+</section>
+<section>
+<title>Submitting a Patch to the Project</title>
+<para>Your patch should be placed in the Public Domain in order to be considered. If your patch is not in the Public Domain, do not submit it.</para>
+<para>Patches should be submitted to the SourceForge <ulink url="http://sourceforge.net/tracker/?atid=737577&amp;group_id=137061&amp;func=browse">cpcd Project Patch Tracking System</ulink>.</para>
+</section>
+</chapter>
+
+<glossary>
+<title>Glossary of Terms</title>
+
+<glossdiv><title>B</title>
+
+<glossentry id="backtrace"><glossterm>Backtrace</glossterm>
+<glossdef>
+  <para>A print out of stack information which can be created after a crash.  This information is very useful in the debugging of programs.</para>
+</glossdef>
+</glossentry>
+</glossdiv>
+
+<glossdiv><title>G</title>
+
+<glossentry id="gnutella"><glossterm>Gnutella</glossterm>
+<glossdef>
+  <para>A peer to peer network which is primarily used to distribute files.</para>
+</glossdef>
+</glossentry>
+
+<glossentry id="gwc"><glossterm>Gnutella Web Cache</glossterm>
+  <acronym>GWC</acronym>
+<glossdef>
+  <para>A cgi based solution to the problem of bootstrapping peer to peer nodes on to the existing network.</para>
+</glossdef>
+</glossentry>
+</glossdiv>
+
+<glossdiv><title>P</title>
+<glossentry id="servlet"><glossterm>Ping (Gnutella)</glossterm>
+<glossdef>
+  <para>A UDP packet sent to a Gnutella servlet which is responded to.</para>
+</glossdef>
+</glossentry>
+
+<glossentry id="servlet"><glossterm>Ping (Gnutella Web Cache)</glossterm>
+<glossdef>
+  <para>A message sent to a Gnutella Web Cache to which the cache will respond with a well defined message.  These ping are useful to check and make sure that a cache submitted to the network is actually a cache rather than a pay-per-click advertising link for example.</para>
+</glossdef>
+</glossentry>
+
+<glossentry id="servlet"><glossterm>Pong (Gnutella)</glossterm>
+<glossdef>
+  <para>A response sent to a Gnutella servlet which had sent a ping.  A pong may contain a compressed list of ultrapeers.</para>
+</glossdef>
+</glossentry>
+</glossdiv>
+
+<glossdiv><title>S</title>
+<glossentry id="servlet"><glossterm>Servlet</glossterm>
+<glossdef>
+  <para>A peer to peer progam.  Also, a peer in a peer to peer network.</para>
+</glossdef>
+</glossentry>
+</glossdiv>
+
+<glossdiv><title>T</title>
+<glossentry id="thread_pool"><glossterm>Thread Pool</glossterm>
+<glossdef>
+  <para>A collection of threads which are all working on the same task.  When a single thread is not fast enough to handle a given task, a collection of threads is often created.  A pending instance of a task in handled by the first non busy thread in the pool.</para>
+</glossdef>
+</glossentry>
+</glossdiv>
+
+<glossdiv><title>U</title>
+<glossentry id="uhc"><glossterm>Ultra Host Cache</glossterm>
+  <acronym>UHC</acronym>
+<glossdef>
+  <para>A gnutella node which keeps a list of UltraPeers and responds to pings with that list.</para>
+</glossdef>
+</glossentry>
+
+<glossentry id="uhc"><glossterm>Ultra Peer</glossterm>
+<glossdef>
+  <para>A gnutella node which is allowing connections from other gnutella nodes.</para>
+</glossdef>
+</glossentry>
+</glossdiv>
+
+</glossary>
+</book>
