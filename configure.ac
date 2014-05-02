@@ -1,6 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(src/cpcd.c)
-AM_INIT_AUTOMAKE(cpcd,1.1.0)
+AC_INIT([cpcd], [1.1.0])
+AC_CONFIG_SRCDIR([src/cpcd.c])
+AM_INIT_AUTOMAKE
 
 dnl Set of available languages.
 ALL_LINGUAS="en"
